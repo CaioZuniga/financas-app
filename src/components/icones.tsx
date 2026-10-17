@@ -22,4 +22,5 @@ export const IcAjustes = base('M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12l2-1-1-3
 export const IcMais = base('M5 12h.01M12 12h.01M19 12h.01')
 export const IcLixo = base('M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13')
 export const IcCadeado = base('M6 11h12v9H6zM8 11V8a4 4 0 0 1 8 0v3')
+export const IcRelatorio = base('M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6M10 9h2')
 export const IcAlerta = base('M12 4 2.5 20h19zM12 10v4M12 17h.01')

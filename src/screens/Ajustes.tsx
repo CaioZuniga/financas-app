@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { IcLixo } from '../components/icones'
+import SyncDrive from '../components/SyncDrive'
 import { Botao, CabecalhoCard, Card, Titulo } from '../components/ui'
 import { db, exportarBackup, restaurarBackup } from '../db'
 import { carregarDemo } from '../lib/demo'
@@ -39,8 +40,9 @@ export default function Ajustes() {
       <Titulo titulo="Ajustes" sub="Backup, regras de categoria e dados" />
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card atraso={1} destaque>
-          <CabecalhoCard titulo="Backup" sub="Os dados ficam só neste navegador. Baixe um backup de vez em quando ou para levar para outro aparelho." />
+        <SyncDrive />
+        <Card atraso={1}>
+          <CabecalhoCard titulo="Backup em arquivo" sub="Os dados ficam só neste navegador. Um arquivo .json (sem criptografia) para guardar onde quiser." />
           <div className="flex flex-wrap gap-3">
             <Botao variante="primario" onClick={baixar}>
               Baixar backup (.json)

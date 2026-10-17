@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { categorizarMovimento } from './categorias'
 import { tabelaSAC } from './financiamento'
 import { avaliarMetas, gastosDoMes, sugerirLimite } from './orcamento'
+import { montarRelatorio } from './relatorio'
+import { destrancar, SenhaErrada, trancar } from './cripto'
+import { decidirSync } from './sync'
 import { patrimonioAtual, projetarPatrimonio, saldoDevedorEm } from './patrimonio'
 import { parseExtrato, pareceExtrato } from './pdf/extrato'
 
@@ -92,6 +95,67 @@ describe('orçamento', () => {
     expect(r.find((x) => x.categoria === 'Restaurantes')).toMatchObject({ projetado: 600, status: 'ok' })
     expect(r.find((x) => x.categoria === 'Lazer')!.status).toBe('ok')
     expect(sugerirLimite([0, 610, 720])).toBe(700)
+  })
+})
+
+describe('relatório mensal', () => {
+  const lancamentos = [
+    { data: '2026-09-20', descricao: 'Carrefour', valor: 500, categoria: 'Mercado' as const, faturaRef: '2026-10', cartao: 'Nubank', ignorado: 0 as const },
+    { data: '2026-09-21', descricao: 'TV', valor: 300, categoria: 'Compras' as const, faturaRef: '2026-10', cartao: 'XP', ignorado: 0 as const, parcela: { atual: 2, total: 5 } },
+    { data: '2026-09-28', descricao: 'Pagamento', valor: -900, categoria: 'Pagamentos' as const, faturaRef: '2026-10', cartao: 'Nubank', ignorado: 1 as const },
+    { data: '2026-08-20', descricao: 'Carrefour', valor: 400, categoria: 'Mercado' as const, faturaRef: '2026-09', cartao: 'Nubank', ignorado: 0 as const },
+  ]
+  const movimentos = [
+    { data: '2026-10-05', descricao: 'Salário', valor: 10000, categoria: 'Receitas' as const, conta: 'Itaú', ignorado: 0 as const },
+    { data: '2026-10-10', descricao: 'Pagamento de fatura', valor: -800, categoria: 'Pagamentos' as const, conta: 'Itaú', ignorado: 0 as const },
+    { data: '2026-10-12', descricao: 'Aplicação CDB', valor: -2000, categoria: 'Investimentos' as const, conta: 'Itaú', ignorado: 0 as const },
+    { data: '2026-10-15', descricao: 'Escola', valor: -1200, categoria: 'Educação' as const, conta: 'Itaú', ignorado: 0 as const },
+  ]
+  const recorrentes = [{ descricao: 'Salário', valor: 9000, natureza: 'entrada' as const, inicio: '2026-01', reajusteAnual: 0 }]
+
+  it('soma entradas do extrato, consumo sem pagamentos e compara com o mês anterior', () => {
+    const r = montarRelatorio({ mes: '2026-10', lancamentos, movimentos, recorrentes, metas: [{ categoria: 'Mercado', limite: 450 }] })
+    expect(r.entradas).toBe(10000)
+    expect(r.fonteEntradas).toBe('extrato')
+    expect(r.gastos).toBe(500 + 300 + 1200)
+    expect(r.investido).toBe(2000)
+    expect(r.sobra).toBe(8000)
+    expect(r.taxaPoupanca).toBeCloseTo(0.8)
+    expect(r.categorias[0]).toMatchObject({ categoria: 'Educação', valor: 1200, variacao: null })
+    expect(r.categorias.find((c) => c.categoria === 'Mercado')!.variacao).toBeCloseTo(0.25)
+    expect(r.metas[0]).toMatchObject({ categoria: 'Mercado', status: 'estourou' })
+    expect(r.maiores.map((m) => m.descricao)).toEqual(['Escola', 'Carrefour', 'TV'])
+    expect(r.cartaoParcelado).toBe(300)
+  })
+
+  it('sem extrato, usa as entradas cadastradas em Fluxo', () => {
+    const r = montarRelatorio({ mes: '2026-09', lancamentos, movimentos, recorrentes, metas: [] })
+    expect(r).toMatchObject({ entradas: 9000, fonteEntradas: 'cadastro', gastos: 400 })
+  })
+})
+
+describe('backup criptografado', () => {
+  it('ida e volta com a senha certa; senha errada falha sem vazar dados', async () => {
+    const dados = { metas: [{ categoria: 'Mercado', limite: 1500 }], nota: 'açaí' }
+    const cofre = await trancar(dados, 'senha forte 123')
+    expect(cofre.dados).not.toContain('Mercado')
+    expect(await destrancar(cofre, 'senha forte 123')).toEqual(dados)
+    await expect(destrancar(cofre, 'outra')).rejects.toBeInstanceOf(SenhaErrada)
+    const outro = await trancar(dados, 'senha forte 123')
+    expect(outro.iv).not.toBe(cofre.iv)
+  })
+})
+
+describe('decisão da sincronização', () => {
+  const t = 1_800_000_000_000
+  it('cobre os casos', () => {
+    expect(decidirSync({ remotoEm: null, localAlteradoEm: t, ultimaSync: 0 })).toBe('enviar')
+    expect(decidirSync({ remotoEm: t, localAlteradoEm: 0, ultimaSync: 0 })).toBe('baixar') // aparelho novo
+    expect(decidirSync({ remotoEm: t, localAlteradoEm: t, ultimaSync: 0 })).toBe('conflito') // os dois têm dados
+    expect(decidirSync({ remotoEm: t + 60_000, localAlteradoEm: t - 1, ultimaSync: t })).toBe('baixar')
+    expect(decidirSync({ remotoEm: t + 1_000, localAlteradoEm: t + 30_000, ultimaSync: t })).toBe('enviar')
+    expect(decidirSync({ remotoEm: t + 60_000, localAlteradoEm: t + 30_000, ultimaSync: t })).toBe('conflito')
+    expect(decidirSync({ remotoEm: t, localAlteradoEm: t - 1, ultimaSync: t })).toBe('em-dia')
   })
 })
 

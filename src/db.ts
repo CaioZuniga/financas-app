@@ -102,9 +102,31 @@ const TABELAS = [
   'snapshots',
 ] as const
 
-export async function exportarBackup(): Promise<Blob> {
-  const dados: Record<string, unknown[]> = {}
+export type Dados = Record<string, unknown[]>
+
+export async function lerTudo(): Promise<Dados> {
+  const dados: Dados = {}
   for (const t of TABELAS) dados[t] = await db.table(t).toArray()
+  return dados
+}
+
+/** Substitui tudo pelos dados recebidos (backup ou nuvem), sem marcar como alteração local. */
+export async function gravarTudo(dados: Dados): Promise<void> {
+  gravandoDeFora = true
+  try {
+    await db.transaction('rw', TABELAS.map((t) => db.table(t)), async () => {
+      for (const t of TABELAS) {
+        await db.table(t).clear()
+        await db.table(t).bulkAdd(dados[t] ?? [])
+      }
+    })
+  } finally {
+    gravandoDeFora = false
+  }
+}
+
+export async function exportarBackup(): Promise<Blob> {
+  const dados = await lerTudo()
   return new Blob([JSON.stringify({ app: 'financas-app', versao: 1, em: new Date().toISOString(), dados }, null, 1)], {
     type: 'application/json',
   })
@@ -113,10 +135,32 @@ export async function exportarBackup(): Promise<Blob> {
 export async function restaurarBackup(arquivo: File): Promise<void> {
   const json = JSON.parse(await arquivo.text())
   if (json.app !== 'financas-app') throw new Error('Este arquivo não é um backup do Finanças.')
-  await db.transaction('rw', TABELAS.map((t) => db.table(t)), async () => {
-    for (const t of TABELAS) {
-      await db.table(t).clear()
-      await db.table(t).bulkAdd(json.dados[t] ?? [])
-    }
-  })
+  await gravarTudo(json.dados)
+}
+
+// Marca quando os dados mudaram neste aparelho (para a sincronização saber o que é mais novo).
+const CHAVE_ALTERADO = 'financas:alteradoEm'
+let gravandoDeFora = false
+export const alteradoEm = (): number => {
+  try {
+    return Number(localStorage.getItem(CHAVE_ALTERADO) ?? 0)
+  } catch {
+    return 0
+  }
+}
+function marcarAlterado() {
+  if (gravandoDeFora) return
+  try {
+    localStorage.setItem(CHAVE_ALTERADO, String(Date.now()))
+  } catch {
+    /* sem localStorage: a sincronização só perde o aviso de conflito */
+  }
+}
+for (const t of TABELAS) {
+  // Snapshots são recalculados sozinhos; não contam como alteração do usuário.
+  if (t === 'snapshots') continue
+  const tabela = db.table(t)
+  tabela.hook('creating', marcarAlterado)
+  tabela.hook('updating', marcarAlterado)
+  tabela.hook('deleting', marcarAlterado)
 }

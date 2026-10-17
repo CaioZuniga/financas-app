@@ -153,3 +153,54 @@ select {
     animation: none;
   }
 }
+
+/* Impressão (relatório em PDF): mesmos tokens, versão clara para papel. */
+@page {
+  size: A4;
+  margin: 12mm;
+}
+@media print {
+  :root {
+    color-scheme: light;
+    --color-fundo: #ffffff;
+    --color-painel: #ffffff;
+    --color-painel-2: #f4f5f7;
+    --color-linha: #e3e5ea;
+    --color-linha-forte: #c9ccd4;
+    --color-texto: #12141a;
+    --color-suave: #4a5060;
+    --color-apagado: #7a8090;
+    --color-neon: #0b8a5a;
+    --color-violeta: #5a48d0;
+    --color-ambar: #b77700;
+    --color-rosa: #c8325a;
+  }
+  html,
+  body {
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .fundo-app,
+  .no-print,
+  aside,
+  nav {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  .vidro,
+  .vidro-destaque {
+    background: #fff !important;
+    border: 1px solid var(--color-linha) !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
+  .entrar {
+    animation: none !important;
+  }
+  .quebra-evitar {
+    break-inside: avoid;
+  }
+}

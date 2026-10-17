@@ -48,3 +48,10 @@ export function lerValorBR(txt: string): number {
   const limpo = txt.replace(/[R$\s]/g, '').replace(/[−–]/g, '-').replace(/\./g, '').replace(',', '.')
   return Number(limpo)
 }
+
+export const MESES_LONGOS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
+
+export function rotuloMesLongo(mes: Mes): string {
+  const [a, m] = mes.split('-').map(Number)
+  return `${MESES_LONGOS[m - 1]} de ${a}`
+}

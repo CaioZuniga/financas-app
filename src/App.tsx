@@ -13,6 +13,7 @@ import {
   IcMeta,
   IcPainel,
   IcPatrimonio,
+  IcRelatorio,
 } from './components/icones'
 import { ErroTela } from './components/ErroTela'
 import Ajustes from './screens/Ajustes'
@@ -25,6 +26,7 @@ import Importar from './screens/Importar'
 import Metas from './screens/Metas'
 import Painel from './screens/Painel'
 import Patrimonio from './screens/Patrimonio'
+import Relatorio from './screens/Relatorio'
 
 const GRUPOS = [
   {
@@ -44,6 +46,7 @@ const GRUPOS = [
       { to: '/imovel', rotulo: 'Imóvel', Icone: IcCasa },
       { to: '/dividas', rotulo: 'Dívidas', Icone: IcDivida },
       { to: '/fluxo', rotulo: 'Fluxo', Icone: IcFluxo },
+      { to: '/relatorio', rotulo: 'Relatório', Icone: IcRelatorio },
     ],
   },
   { titulo: '', itens: [{ to: '/ajustes', rotulo: 'Ajustes', Icone: IcAjustes }] },
@@ -154,7 +157,7 @@ export default function App() {
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="flex items-center justify-between px-4 pt-5 md:hidden">
+          <header className="no-print flex items-center justify-between px-4 pt-5 md:hidden">
             <Marca />
           </header>
           <main className="px-4 pt-6 pb-28 md:px-8 md:pt-10 md:pb-12">
@@ -181,6 +184,7 @@ function Telas() {
               <Route path="/imovel" element={<Imovel />} />
               <Route path="/dividas" element={<Dividas />} />
               <Route path="/fluxo" element={<Fluxo />} />
+              <Route path="/relatorio" element={<Relatorio />} />
               <Route path="/ajustes" element={<Ajustes />} />
             </Routes>
     </ErroTela>

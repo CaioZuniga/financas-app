@@ -6,3 +6,5 @@
 - Os dados ficam no IndexedDB do navegador (Dexie, `src/db.ts`). Nada é enviado para servidor.
 - Parsers de fatura: `src/engine/pdf/parse.ts`. PDFs reais para calibrar ficam em `amostras/` (no .gitignore, nunca versionar). Ao calibrar um banco novo, transforme as linhas relevantes em teste com valores fictícios.
 - Antes de commitar: `npm test`, `npm run lint` e `npm run build` passando.
+- Sincronização: `src/lib/drive.ts` (Google Identity Services + Drive appDataFolder) e `src/engine/cripto.ts`. Nunca enviar dados sem criptografia para a nuvem.
+- Impressão: `@media print` em `src/index.css` troca os tokens para a versão clara; marque com `no-print` o que não deve sair no papel.
