@@ -54,16 +54,18 @@ export function acharVencimento(texto: string): string | undefined {
 }
 
 export function acharTotal(texto: string): number | undefined {
-  // "Total da fatura" (C6, Inter), "Total a pagar" (Nubank), "fatura de outubro, no valor de" (capa do Nubank).
+  // "Total da fatura" (C6, Inter), "Total a pagar" (Nubank), "Valor total devido" (XP),
+  // "no valor de" (capa do Nubank e da XP). "Total da fatura anterior" não conta.
   const m =
-    texto.match(new RegExp(`total (?:da|desta) fatura[^\\d]{0,30}(${VALOR})`, 'i')) ??
+    texto.match(new RegExp(`total (?:da|desta) fatura(?! anterior)[^\\d]{0,30}(${VALOR})`, 'i')) ??
     texto.match(new RegExp(`total a pagar[^\\d]{0,30}(${VALOR})`, 'i')) ??
+    texto.match(new RegExp(`valor total devido[^\\d]{0,10}(${VALOR})`, 'i')) ??
     texto.match(new RegExp(`no valor de[^\\d]{0,10}(${VALOR})`, 'i'))
   return m ? Math.abs(lerValorBR(m[1])) : undefined
 }
 
 const LINHA = new RegExp(
-  `^(\\d{2})[\\/ ](${MES_TXT})(?:[\\/ ](\\d{2,4}))?\\s+(.+?)\\s+(${VALOR})\\s*$`,
+  `^(\\d{2})[\\/ ](${MES_TXT})(?:[\\/ ](\\d{2,4}))?\\s+(.+?)\\s+(${VALOR})(?:\\s+(${VALOR}))?\\s*$`,
   'i',
 )
 
@@ -99,6 +101,8 @@ export function parseFatura(linhas: string[], hoje = new Date()): FaturaExtraida
   const ref = vencimento ? new Date(vencimento + 'T12:00:00') : hoje
   const anoRef = ref.getFullYear()
   const mesRef = ref.getMonth() + 1
+  // XP: colunas "R$ | US$" no fim de cada linha; o valor em reais é a primeira.
+  const colunaDolar = /\bR\$\s+US\$/.test(texto)
 
   const itens: ItemExtraido[] = []
   const ignoradas: string[] = []
@@ -110,11 +114,14 @@ export function parseFatura(linhas: string[], hoje = new Date()): FaturaExtraida
       if (/^\d{2}[/ ]/.test(linha) && /\d,\d{2}/.test(linha)) ignoradas.push(linha)
       continue
     }
-    const [, dia, mesTxt, anoTxt, descBruta, valorTxt] = m
+    const [, dia, mesTxt, anoTxt, descBruta, valor1, valor2] = m
     const mes = lerMes(mesTxt)
     if (!mes || mes > 12 || Number(dia) > 31) continue
-    const desc0 = limparDescricao(descBruta)
-    if (!desc0 || NAO_E_LANCAMENTO.test(desc0)) continue
+    // Sem coluna de dólar, um número a mais no fim faz parte da descrição.
+    const valorTxt = valor2 && !colunaDolar ? valor2 : valor1
+    const desc0 = limparDescricao(valor2 && !colunaDolar ? `${descBruta} ${valor1}` : descBruta)
+    // Linhas do boleto ("20/10/2026 R$ 1.832,96 R$ 274,94") não têm texto de verdade.
+    if (!desc0 || NAO_E_LANCAMENTO.test(desc0) || !/\p{L}{2}/u.test(desc0.replace(/R\$|US\$/g, ''))) continue
 
     let ano = anoTxt ? Number(anoTxt.length === 2 ? '20' + anoTxt : anoTxt) : anoRef
     if (!anoTxt && mes > mesRef) ano -= 1

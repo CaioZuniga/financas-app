@@ -127,6 +127,37 @@ describe('parser de fatura', () => {
     expect(f.itens[4].valor).toBe(-500)
   })
 
+  it('lê o PDF real da XP (2026): colunas R$ e US$, boleto e "fatura anterior"', () => {
+    // Linhas como o pdf.js monta (valores fictícios, formato calibrado com fatura real).
+    const f = parseFatura([
+      'Olá, FULANO! Chegou sua fatura',
+      'com vencimento em Outubro',
+      'no valor de R$ 600,00',
+      'Vencimento Pagamento total Pagamento mínimo',
+      '20/10/2026 R$ 600,00 R$ 90,00',
+      'Banco XP S.A. - CNPJ: 00.000.000/0001-00 000000/0000000',
+      '14/10/2026 9042312883 DM 12/10/2026 N 101/0000000090423128839',
+      'Total da fatura anterior 1.000,00',
+      'Pagamentos/créditos até a emissão da fatura -1.000,00',
+      'Valor total devido 600,00',
+      'Data Descrição R$ US$',
+      '26/01/26 EBN *CAMBLY - Parcela 9/12 100,00 0,00',
+      '17/09/26 Pagamentos Validos Normais -1.000,00',
+      '21/09/26 CONTA VIVO 150,00 0,00',
+      'Subtotal 250,00',
+      '26/04/26 DAFITI*4604881353 - Parcela 6/6 350,00 0,00',
+    ])
+    expect(f.banco).toBe('XP')
+    expect(f.vencimento).toBe('2026-10-20')
+    expect(f.total).toBe(600)
+    expect(f.itens).toHaveLength(4)
+    expect(f.itens[0]).toMatchObject({ data: '2026-01-26', descricao: 'EBN *CAMBLY', valor: 100, parcela: { atual: 9, total: 12 } })
+    expect(f.itens[1].valor).toBe(-1000)
+    expect(f.itens.filter((i) => i.valor > 0).reduce((s, i) => s + i.valor, 0)).toBe(600)
+    expect(f.itens[3].parcela).toEqual({ atual: 6, total: 6 })
+    expect(categorizar('EBN *CAMBLY')).toBe('Educação')
+  })
+
   it('lê layout C6 e DD/MM', () => {
     const f = parseFatura([
       'Banco C6 S.A.',
