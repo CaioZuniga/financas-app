@@ -1,0 +1,155 @@
+@import 'tailwindcss';
+
+/* Tokens do app: cores e fontes só daqui. */
+@theme {
+  --font-display: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --color-fundo: #07080b;
+  --color-painel: #0e1015;
+  --color-painel-2: #141720;
+  --color-linha: rgb(255 255 255 / 0.07);
+  --color-linha-forte: rgb(255 255 255 / 0.14);
+
+  --color-texto: #eef0f4;
+  --color-suave: #9aa0ad;
+  --color-apagado: #5d6370;
+
+  --color-neon: #3ff0a8;
+  --color-neon-escuro: #0f3b2b;
+  --color-violeta: #9b8cff;
+  --color-violeta-escuro: #241d4d;
+  --color-ambar: #f5b84d;
+  --color-rosa: #ff6b8a;
+
+  /* Séries categóricas (passo escuro da paleta validada), em ordem fixa. */
+  --color-s1: #3987e5;
+  --color-s2: #d95926;
+  --color-s3: #199e70;
+  --color-s4: #c98500;
+  --color-s5: #d55181;
+  --color-s6: #008300;
+  --color-s7: #9085e9;
+  --color-s8: #e66767;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--color-fundo);
+  color: var(--color-texto);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+/* Fundo: brilho neon e violeta + grade de pontos que some nas bordas. */
+.fundo-app {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at -10% -10%, rgb(63 240 168 / 0.10), transparent 60%),
+    radial-gradient(50rem 40rem at 110% 110%, rgb(155 140 255 / 0.12), transparent 60%),
+    var(--color-fundo);
+}
+.fundo-app::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgb(255 255 255 / 0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse at 50% 30%, black 20%, transparent 75%);
+}
+
+/* Cartão de vidro com borda em degradê. */
+.vidro {
+  position: relative;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.045), rgb(255 255 255 / 0.015));
+  border: 1px solid var(--color-linha);
+  border-radius: 1.25rem;
+  backdrop-filter: blur(14px);
+}
+.vidro-destaque {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(160deg, #10131a, #0b0d12) padding-box,
+    linear-gradient(135deg, rgb(63 240 168 / 0.55), rgb(155 140 255 / 0.15) 40%, rgb(155 140 255 / 0.5)) border-box;
+  border-radius: 1.5rem;
+}
+
+.texto-neon {
+  background: linear-gradient(100deg, #eafff5 0%, var(--color-neon) 45%, var(--color-violeta) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.rotulo {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-apagado);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+input,
+select {
+  color-scheme: dark;
+}
+
+.campo {
+  width: 100%;
+  background: rgb(255 255 255 / 0.03);
+  border: 1px solid var(--color-linha);
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.campo:focus {
+  border-color: rgb(63 240 168 / 0.6);
+  background: rgb(63 240 168 / 0.04);
+}
+
+.rolagem-fina::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.rolagem-fina::-webkit-scrollbar-thumb {
+  background: var(--color-linha-forte);
+  border-radius: 99px;
+}
+
+@keyframes subir {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.entrar {
+  animation: subir 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entrar {
+    animation: none;
+  }
+}
