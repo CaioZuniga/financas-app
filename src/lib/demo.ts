@@ -1,5 +1,5 @@
-import { db, salvarFinanciamento, type Lancamento } from '../db'
-import { categorizar } from '../engine/categorias'
+import { db, salvarFinanciamento, type Lancamento, type Movimento } from '../db'
+import { categorizar, categorizarMovimento } from '../engine/categorias'
 import { mesAtual, somaMeses } from './format'
 
 /** Dados fictícios para conhecer o app. Tudo pode ser apagado em Ajustes. */
@@ -70,6 +70,45 @@ export async function carregarDemo() {
   await db.dividas.bulkAdd([
     { nome: 'Empréstimo pessoal', credor: 'Itaú', saldo: 14800, taxaMensal: 0.0219, parcelaMinima: 890 },
     { nome: 'Financiamento do carro', credor: 'BV', saldo: 38500, taxaMensal: 0.0149, parcelaMinima: 1620 },
+  ])
+
+  const movs: Movimento[] = []
+  for (let k = 0; k < 3; k++) {
+    const mes = somaMeses(ini, k)
+    const itens: [string, number, string][] = [
+      ['Salário Empresa X', 18500, '05'],
+      ['Pix recebido Inquilino sala', 2200, '06'],
+      ['Pagamento de fatura Nubank', -2800, '10'],
+      ['Pagamento de fatura C6', -1900, '15'],
+      ['Débito automático Escola', -2900, '08'],
+      ['Boleto Condomínio', -1450, '09'],
+      ['Pix enviado Feira do bairro', -180, '12'],
+      ['Compra no débito Hortifruti', -240 - k * 35, '18'],
+      ['Pix enviado Diarista', -600, '20'],
+      ['Aplicação CDB', -3000, '25'],
+      ['DARF Carnê-leão', -410, '28'],
+    ]
+    for (const [descricao, valor, dia] of itens)
+      movs.push({ data: `${mes}-${dia}`, descricao, valor, categoria: categorizarMovimento(descricao, valor), conta: 'Itaú', ignorado: 0 })
+  }
+  await db.movimentos.bulkAdd(movs)
+
+  await db.metas.bulkAdd([
+    { categoria: 'Mercado', limite: 1500 },
+    { categoria: 'Restaurantes', limite: 400 },
+    { categoria: 'Delivery', limite: 250 },
+    { categoria: 'Transporte', limite: 150 },
+    { categoria: 'Compras', limite: 800 },
+    { categoria: 'Lazer', limite: 200 },
+  ])
+
+  const hojeISO = new Date().toISOString().slice(0, 10)
+  await db.ativos.bulkAdd([
+    { nome: 'Conta Itaú', tipo: 'conta', valor: 8400, rendimentoAnual: 0, atualizadoEm: hojeISO },
+    { nome: 'CDB 110% CDI', tipo: 'investimento', valor: 62000, rendimentoAnual: 0.12, atualizadoEm: hojeISO },
+    { nome: 'Previdência', tipo: 'investimento', valor: 41000, rendimentoAnual: 0.1, atualizadoEm: hojeISO },
+    { nome: 'Apartamento', tipo: 'imovel', valor: 820000, rendimentoAnual: 0.05, atualizadoEm: hojeISO },
+    { nome: 'Carro', tipo: 'veiculo', valor: 72000, rendimentoAnual: -0.1, atualizadoEm: hojeISO },
   ])
 
   await salvarFinanciamento({

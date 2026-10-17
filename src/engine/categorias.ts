@@ -12,9 +12,16 @@ export const CATEGORIAS = [
   'Viagem',
   'Lazer',
   'Serviços',
+  'Impostos',
   'Pagamentos',
+  'Transferências',
+  'Investimentos',
+  'Receitas',
   'Outros',
 ] as const
+
+/** Categorias que movem dinheiro mas não são consumo: ficam fora de orçamento e gastos. */
+export const NAO_CONSUMO: Categoria[] = ['Pagamentos', 'Investimentos', 'Receitas']
 
 export type Categoria = (typeof CATEGORIAS)[number]
 
@@ -57,6 +64,28 @@ export function categorizar(descricao: string, regras: Regra[] = []): Categoria 
   if (doUsuario) return doUsuario.categoria
   for (const [re, cat] of PADRAO) if (re.test(d)) return cat
   return 'Outros'
+}
+
+const FATURA_CARTAO = /pagamento (de |da )?fatura|pgto fatura|fatura (do )?cart|nu pagamentos|pagamento cartao|pag(amento)? cartao de credito/
+const INVESTIMENTO = /aplicacao|resgate|\bcdb\b|\blci\b|\blca\b|tesouro|corretora|investiment|poupanca|rdb/
+const IMPOSTO = /\bdarf\b|\bdas\b|iptu|ipva|imposto|receita federal|\binss\b|\bgps\b/
+const TRANSFERENCIA = /\bpix\b|\bted\b|\bdoc\b|transferencia|transf\b/
+
+/**
+ * Categoria de um movimento da conta corrente. Pagamento da fatura do cartão vira "Pagamentos"
+ * (os gastos já contam pela fatura) e entradas sem categoria clara viram "Receitas".
+ */
+export function categorizarMovimento(descricao: string, valor: number, regras: Regra[] = []): Categoria {
+  const d = normalizar(descricao) + ' '
+  const doUsuario = regras.find((r) => d.includes(r.padrao))
+  if (doUsuario) return doUsuario.categoria
+  if (FATURA_CARTAO.test(d)) return 'Pagamentos'
+  if (INVESTIMENTO.test(d)) return 'Investimentos'
+  if (IMPOSTO.test(d)) return 'Impostos'
+  if (valor > 0) return /estorno|reembolso/.test(d) ? 'Outros' : 'Receitas'
+  const c = categorizar(descricao)
+  if (c !== 'Outros' && c !== 'Pagamentos') return c
+  return TRANSFERENCIA.test(d) ? 'Transferências' : c === 'Pagamentos' ? 'Outros' : c
 }
 
 /** Chave estável de uma descrição para virar regra: tira parcela, números e asteriscos. */

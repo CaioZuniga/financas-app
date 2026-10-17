@@ -2,6 +2,8 @@ import Dexie, { type EntityTable } from 'dexie'
 import type { Categoria, Regra } from './engine/categorias'
 import type { Divida } from './engine/dividas'
 import type { Financiamento } from './engine/financiamento'
+import type { Meta } from './engine/orcamento'
+import type { Ativo, Snapshot } from './engine/patrimonio'
 import type { Banco } from './engine/pdf/parse'
 import type { LancamentoBase, Recorrente } from './engine/projecao'
 
@@ -12,8 +14,23 @@ export interface Lancamento extends LancamentoBase {
   importId?: number
 }
 
+/** Movimento da conta corrente (extrato). */
+export interface Movimento {
+  id?: number
+  data: string
+  descricao: string
+  /** Positivo = entrada; negativo = saída. */
+  valor: number
+  categoria: Categoria
+  conta: string
+  importId?: number
+  ignorado: 0 | 1
+}
+
 export interface Importacao {
   id?: number
+  /** Ausente nas importações antigas (= fatura). */
+  tipo?: 'fatura' | 'extrato'
   arquivo: string
   banco: Banco
   cartao: string
@@ -42,6 +59,10 @@ export const db = new Dexie('financas') as Dexie & {
   dividas: EntityTable<Divida, 'id'>
   regras: EntityTable<Regra, 'id'>
   config: EntityTable<Config, 'chave'>
+  movimentos: EntityTable<Movimento, 'id'>
+  metas: EntityTable<Meta, 'id'>
+  ativos: EntityTable<Ativo, 'id'>
+  snapshots: EntityTable<Snapshot, 'mes'>
 }
 
 db.version(1).stores({
@@ -54,13 +75,32 @@ db.version(1).stores({
   config: 'chave',
 })
 
+db.version(2).stores({
+  movimentos: '++id, data, conta, categoria, importId',
+  metas: '++id, &categoria',
+  ativos: '++id, tipo',
+  snapshots: 'mes',
+})
+
 export async function lerFinanciamento(): Promise<Financiamento | null> {
   return ((await db.config.get('financiamento'))?.valor as Financiamento) ?? null
 }
 
 export const salvarFinanciamento = (f: Financiamento) => db.config.put({ chave: 'financiamento', valor: f })
 
-const TABELAS = ['lancamentos', 'importacoes', 'cartoes', 'recorrentes', 'dividas', 'regras', 'config'] as const
+const TABELAS = [
+  'lancamentos',
+  'importacoes',
+  'cartoes',
+  'recorrentes',
+  'dividas',
+  'regras',
+  'config',
+  'movimentos',
+  'metas',
+  'ativos',
+  'snapshots',
+] as const
 
 export async function exportarBackup(): Promise<Blob> {
   const dados: Record<string, unknown[]> = {}

@@ -40,9 +40,9 @@ const mesPorNome = (s: string): number => {
   const i = MESES_CURTOS.indexOf(s.toLowerCase().slice(0, 3))
   return i >= 0 ? i + 1 : NaN
 }
-const lerMes = (s: string) => (/^\d+$/.test(s) ? Number(s) : mesPorNome(s))
-const MES_TXT = '(?:\\d{2}|jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)'
-const VALOR = '(?:[-−–]\\s?)?(?:R\\$\\s?)?(?:[-−–]\\s?)?\\d{1,3}(?:\\.\\d{3})*,\\d{2}'
+export const lerMes = (s: string) => (/^\d+$/.test(s) ? Number(s) : mesPorNome(s))
+export const MES_TXT = '(?:\\d{2}|jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)'
+export const VALOR = '(?:[-−–]\\s?)?(?:R\\$\\s?)?(?:[-−–]\\s?)?\\d{1,3}(?:\\.\\d{3})*,\\d{2}'
 
 export function acharVencimento(texto: string): string | undefined {
   const re = new RegExp(`vencimento[^\\d]{0,40}(\\d{2})[\\/ ]${MES_TXT.replace('(?:', '(')}[\\/ ](\\d{4})`, 'i')
