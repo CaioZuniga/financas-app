@@ -54,7 +54,11 @@ export function acharVencimento(texto: string): string | undefined {
 }
 
 export function acharTotal(texto: string): number | undefined {
-  const m = texto.match(new RegExp(`total (?:da|desta) fatura[^\\d]{0,30}(${VALOR})`, 'i'))
+  // "Total da fatura" (C6, Inter), "Total a pagar" (Nubank), "fatura de outubro, no valor de" (capa do Nubank).
+  const m =
+    texto.match(new RegExp(`total (?:da|desta) fatura[^\\d]{0,30}(${VALOR})`, 'i')) ??
+    texto.match(new RegExp(`total a pagar[^\\d]{0,30}(${VALOR})`, 'i')) ??
+    texto.match(new RegExp(`no valor de[^\\d]{0,10}(${VALOR})`, 'i'))
   return m ? Math.abs(lerValorBR(m[1])) : undefined
 }
 

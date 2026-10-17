@@ -43,7 +43,7 @@ export default function Importar() {
     for (const arq of Array.from(arquivos)) {
       if (!arq.name.toLowerCase().endsWith('.pdf')) continue
       try {
-        const linhas = await extrairLinhas(arq, async () => window.prompt(`"${arq.name}" tem senha. Digite a senha do PDF (geralmente parte do CPF):`))
+        const linhas = await extrairLinhas(arq, async () => window.prompt(`"${arq.name}" tem senha. Digite a senha do PDF.\nC6: os 5 primeiros dígitos do CPF.`))
         const fatura = parseFatura(linhas)
         novos.push({
           arquivo: arq.name,

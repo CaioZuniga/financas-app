@@ -27,17 +27,18 @@ export interface Regra {
 
 const PADRAO: [RegExp, Categoria][] = [
   [/pagamento|pgto|credito de|estorno/, 'Pagamentos'],
-  [/ifood|rappi|ze delivery|aiqfome|james/, 'Delivery'],
-  [/uber|99 ?app|99pop|99 tecnologia|cabify|metro|bilhete|sptrans|estacion|sem parar|veloe|conectcar|pedagio/, 'Transporte'],
-  [/posto|shell|ipiranga|petrobras|br mania|combust|ale /, 'Combustível'],
-  [/netflix|spotify|disney|hbo|max\.com|prime video|amazon prime|youtube|apple\.com|google one|icloud|deezer|globoplay|chatgpt|openai|claude|anthropic/, 'Assinaturas'],
+  [/ifood|ifd\*|rappi|ze delivery|aiqfome|james/, 'Delivery'],
+  [/uber|99 ?app|99pop|99 tecnologia|cabify|metro|bilhete|sptrans|estacion|sem parar|veloe|conectcar|nutag|pedagio|\bpark\b|zona azul/, 'Transporte'],
+  [/posto|shell|ipiranga|petrobras|br mania|combust/, 'Combustível'],
+  [/netflix|spotify|disney|hbo|max\.com|prime video|amazon prime|youtube|apple\.com|google|icloud|deezer|globoplay|chatgpt|openai|claude|anthropic/, 'Assinaturas'],
   [/drogasil|droga raia|raia|pague menos|farmac|drogaria|hospital|clinica|laborat|unimed|amil|sulamerica|odonto/, 'Saúde'],
-  [/carrefour|pao de acucar|extra |assai|atacad|supermerc|mercado(?! ?livre| ?pago)|hortifruti|sams club|dia |oba /, 'Mercado'],
-  [/restaurante|bar |burger|lanch|pizza|padaria|cafe|starbucks|outback|mcdonald|mc donald|bk |habib|sushi|churrasc/, 'Restaurantes'],
+  [/carrefour|pao de acucar|extra |assai|atacad|supermerc|mercado(?! ?livre| ?pago)|hortifruti|sams club|\bdia |\boba |oxxo|emporio|comercio de alim|acougue|sacolao/, 'Mercado'],
+  [/restaurante|bar |burger|lanch|pizza|padaria|cafe|starbucks|outback|mcdonald|mc donald|bk |habib|sushi|churrasc|sanduich|bistro|choper|sorvet|arabe|esfih|cantina|boteco|grill|doceria|confeitaria/, 'Restaurantes'],
   [/amazon|mercado ?livre|mercadolivre|shopee|aliexpress|magalu|magazine|americanas|shein|renner|zara|c&a|riachuelo|netshoes|centauro|kabum/, 'Compras'],
   [/leroy|telhanorte|tok&stok|tok stok|camicado|condominio|enel|sabesp|comgas|vivo|claro|tim |net |internet/, 'Casa'],
   [/escola|faculdade|curso|udemy|alura|livraria|saraiva/, 'Educação'],
   [/latam|gol |azul |airbnb|booking|hotel|decolar|hoteis|smiles|passagem/, 'Viagem'],
+  [/barbearia|salao|cabeleire|lavanderia|estetica|manicure|correios|cartorio/, 'Serviços'],
   [/cinema|ingresso|sympla|eventim|steam|playstation|xbox|nintendo|cinemark/, 'Lazer'],
 ]
 

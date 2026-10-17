@@ -95,6 +95,38 @@ describe('parser de fatura', () => {
     expect(f.itens[3].data).toBe('2027-01-02')
   })
 
+  it('lê o PDF real do Nubank (2026): capa, NuTag, pagamento e parcelas', () => {
+    // Linhas como o pdf.js monta (valores fictícios, formato calibrado com fatura real).
+    const f = parseFatura([
+      'Esta é a sua fatura de',
+      'O Nubank declara, nos termos da Lei 12.007 2009, que os débitos',
+      'outubro, no valor de',
+      'R$ 1.010,00',
+      'Data de vencimento: 20 OUT 2026',
+      'Fatura anterior R$ 500,00',
+      'Pagamento recebido −R$ 500,00',
+      'Total a pagar R$ 1.010,00',
+      'TRANSAÇÕES DE 13 SET A 13 OUT',
+      'Fulano R$ 1.010,00',
+      '13 SET •••• 1234 Ec *Mercadolivre - Parcela 2/4 R$ 100,00',
+      '15 SET Transação de NuTag R$ 10,00',
+      '21 SET •••• 9876 Ifd*Pizzaria Integrale R$ 50,00',
+      '03 OUT •••• 1234 Dl*Uberrides R$ 850,00',
+      'Pagamentos -R$ 500,00',
+      '17 SET Pagamento em 17 SET −R$ 500,00',
+      '3 de 6',
+    ])
+    expect(f.banco).toBe('Nubank')
+    expect(f.total).toBe(1010)
+    expect(f.itens).toHaveLength(5)
+    const gastos = f.itens.filter((i) => categorizar(i.descricao) !== 'Pagamentos')
+    expect(gastos.reduce((s, i) => s + i.valor, 0)).toBe(1010)
+    expect(f.itens[0]).toMatchObject({ descricao: 'Ec *Mercadolivre', parcela: { atual: 2, total: 4 } })
+    expect(categorizar(f.itens[1].descricao)).toBe('Transporte')
+    expect(categorizar(f.itens[2].descricao)).toBe('Delivery')
+    expect(f.itens[4].valor).toBe(-500)
+  })
+
   it('lê layout C6 e DD/MM', () => {
     const f = parseFatura([
       'Banco C6 S.A.',
