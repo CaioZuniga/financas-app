@@ -12,6 +12,7 @@ Publicado em https://caiozuniga.github.io/financas-app/
 - **Patrimônio**: ativos (conta, investimentos, imóveis, veículos) − imóvel financiado − dívidas, com histórico mensal e projeção de 12 meses.
 - **Dívidas**: avalanche × bola de neve com orçamento ajustável.
 - **Fluxo**: receitas e contas fixas com reajuste anual; projeção mês a mês somando tudo.
+- **Análises**: assinaturas e gastos recorrentes, gastos fora do padrão, mapa de calor mês × categoria, ranking de estabelecimentos e dia da semana, comprometimento de renda, reserva de emergência, independência financeira (regra dos 4%) e alívio de caixa quando as parcelas terminam.
 - **Relatório mensal**: resumo do mês (entradas, gastos por categoria vs. mês anterior, metas, patrimônio, maiores gastos) pronto para imprimir ou salvar em PDF A4.
 - **Sincronização**: backup criptografado (AES-GCM, chave derivada da sua senha) na pasta oculta do app no Google Drive, para usar no PC e no celular. Exige um Client ID OAuth do Google (instruções na tela Ajustes).
 

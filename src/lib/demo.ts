@@ -33,7 +33,9 @@ export async function carregarDemo() {
     const mesCompra = somaMeses(ref, -1)
     gastos.forEach(([d, v], i) => {
       const cartao = i % 3 === 0 ? 'C6' : 'Nubank'
-      const valor = Math.round(v * (0.85 + ((i * 7 + k * 13) % 30) / 100) * 100) / 100
+      // Assinaturas cobram sempre o mesmo valor; o resto varia de mês a mês.
+      const fixo = /netflix|spotify/i.test(d)
+      const valor = fixo ? v : Math.round(v * (0.7 + ((i * 7 + k * 13) % 60) / 100) * 100) / 100
       lancs.push({ data: `${mesCompra}-${String(2 + i * 2).padStart(2, '0')}`, descricao: d, valor, categoria: categorizar(d), cartao, faturaRef: ref, ignorado: 0 })
     })
     lancs.push({

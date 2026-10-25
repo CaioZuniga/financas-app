@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { HashRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import {
   IcAjustes,
+  IcAnalise,
   IcCadeado,
   IcCartao,
   IcCasa,
@@ -17,6 +18,7 @@ import {
 } from './components/icones'
 import { ErroTela } from './components/ErroTela'
 import Ajustes from './screens/Ajustes'
+import Analises from './screens/Analises'
 import Cartao from './screens/Cartao'
 import Conta from './screens/Conta'
 import Dividas from './screens/Dividas'
@@ -36,6 +38,7 @@ const GRUPOS = [
       { to: '/cartao', rotulo: 'Cartão', Icone: IcCartao },
       { to: '/conta', rotulo: 'Conta', Icone: IcConta },
       { to: '/metas', rotulo: 'Metas', Icone: IcMeta },
+      { to: '/analises', rotulo: 'Análises', Icone: IcAnalise },
       { to: '/importar', rotulo: 'Importar', Icone: IcImportar },
     ],
   },
@@ -179,6 +182,7 @@ function Telas() {
               <Route path="/cartao" element={<Cartao />} />
               <Route path="/conta" element={<Conta />} />
               <Route path="/metas" element={<Metas />} />
+              <Route path="/analises" element={<Analises />} />
               <Route path="/importar" element={<Importar />} />
               <Route path="/patrimonio" element={<Patrimonio />} />
               <Route path="/imovel" element={<Imovel />} />

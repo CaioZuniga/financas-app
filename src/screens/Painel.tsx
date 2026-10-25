@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom'
 import { BarrasCategoria, Faisca, GraficoBarras, GraficoLinha } from '../components/graficos'
+import { IcAlerta } from '../components/icones'
 import { Botao, CabecalhoCard, Card, Kpi, Legenda, Progresso, Vazio } from '../components/ui'
+import { alivioDeCaixa, comprometimento, detectarRecorrencias, foraDoPadrao, parcelasCartaoPorMes, reservaEmergencia, unificarGastos } from '../engine/analises'
 import { avaliarMetas, gastosDoMes } from '../engine/orcamento'
 import { parcelasFuturas } from '../engine/projecao'
 import { corCategoria, porCategoria, useDados, useRegistrarSnapshot } from '../lib/dados'
 import { carregarDemo } from '../lib/demo'
-import { difMeses, moeda, moedaCurta, rotuloMes } from '../lib/format'
+import { difMeses, moeda, moedaCurta, percentual, rotuloMes, somaMeses } from '../lib/format'
 
 export default function Painel() {
   const d = useDados()
@@ -41,6 +43,7 @@ export default function Painel() {
   const gastoMetas = metas.reduce((s, m) => s + m.gasto, 0)
   const pl = d.patrimonio
   const plFinal = d.projecaoPatrimonio.at(-1)
+  const destaques = montarDestaques(d)
 
   return (
     <div className="space-y-5">
@@ -96,6 +99,35 @@ export default function Painel() {
           />
         </div>
       </div>
+
+      {destaques.length > 0 && (
+        <Card atraso={2}>
+          <CabecalhoCard
+            titulo="Destaques"
+            sub="O que as análises encontraram nos seus números"
+            acao={
+              <Link to="/analises" className="font-mono text-xs text-neon hover:underline">
+                ver análises →
+              </Link>
+            }
+          />
+          <ul className="grid gap-3 md:grid-cols-2">
+            {destaques.map((x, i) => (
+              <li key={i} className={`flex items-start gap-3 rounded-xl border px-3 py-2.5 text-sm ${x.tom === 'alerta' ? 'border-ambar/25 bg-ambar/5' : 'border-neon/20 bg-neon/5'}`}>
+                {x.tom === 'alerta' ? (
+                  <IcAlerta className="mt-0.5 shrink-0 text-ambar" width={15} height={15} />
+                ) : (
+                  <span className="mt-1.5 size-2 shrink-0 rounded-full bg-neon shadow-[0_0_8px_var(--color-neon)]" />
+                )}
+                <div>
+                  <div className="font-medium">{x.titulo}</div>
+                  <div className="text-xs text-suave">{x.texto}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <div className="grid gap-5 xl:grid-cols-[1.6fr_1fr]">
         <Card atraso={2}>
@@ -322,3 +354,47 @@ function BoasVindas() {
   )
 }
 
+interface Destaque {
+  tom: 'alerta' | 'bom'
+  titulo: string
+  texto: string
+}
+
+/** Até 4 frases curtas com o que mais importa agora, vindas das análises. */
+function montarDestaques(d: ReturnType<typeof useDados>): Destaque[] {
+  const out: Destaque[] = []
+  const gastos = unificarGastos(d.lancamentos, d.movimentos)
+  const ultimo = [...new Set(gastos.map((g) => g.mes))].sort().at(-1)
+
+  if (ultimo)
+    for (const x of foraDoPadrao(gastos, ultimo).slice(0, 2))
+      out.push({
+        tom: 'alerta',
+        titulo: x.tipo === 'novo' ? `Gasto novo: ${x.rotulo}` : `${x.rotulo} acima do normal`,
+        texto:
+          x.tipo === 'novo'
+            ? `${moeda(x.valor)} em ${rotuloMes(ultimo, true)}, num lugar que não aparecia antes.`
+            : `${moeda(x.valor)} em ${rotuloMes(ultimo, true)}, contra média de ${moeda(x.referencia)}.`,
+      })
+
+  const comp = comprometimento(d.projecao, parcelasCartaoPorMes(d.lancamentos, parcelasFuturas(d.lancamentos)))[0]
+  if (comp?.fracao !== null && comp && comp.nivel !== 'saudavel')
+    out.push({ tom: 'alerta', titulo: `${percentual(comp.fracao!)} da renda em parcelas`, texto: 'Acima dos 30% recomendados (imóvel + dívidas + parcelas do cartão).' })
+
+  const reserva = reservaEmergencia(d.ativos, d.projecao)
+  if (reserva.custoMensal > 0 && d.ativos.length) {
+    if (reserva.meses < 6)
+      out.push({ tom: 'alerta', titulo: `Reserva cobre ${reserva.meses.toFixed(1).replace('.', ',')} meses`, texto: `Faltam ${moeda(reserva.falta)} para chegar a 6 meses de despesas.` })
+    else out.push({ tom: 'bom', titulo: `Reserva de ${reserva.meses.toFixed(0)} meses`, texto: 'Acima dos 6 meses recomendados.' })
+  }
+
+  const marco = alivioDeCaixa(d.lancamentos, d.dividas, d.hoje).marcos[0]
+  if (marco)
+    out.push({ tom: 'bom', titulo: `+${moeda(marco.libera)}/mês a partir de ${rotuloMes(somaMeses(marco.mes, 1), true)}`, texto: `Termina: ${marco.itens.slice(0, 2).join(', ')}${marco.itens.length > 2 ? '…' : ''}.` })
+
+  const rec = detectarRecorrencias(gastos).filter((r) => r.ativa)
+  if (rec.length)
+    out.push({ tom: 'bom', titulo: `${rec.length} gastos recorrentes`, texto: `Somam ${moeda(rec.reduce((s, r) => s + r.custoAnual, 0))} por ano. Vale revisar as assinaturas.` })
+
+  return out.slice(0, 4)
+}
