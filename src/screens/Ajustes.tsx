@@ -4,7 +4,7 @@ import { IcLixo } from '../components/icones'
 import SyncDrive from '../components/SyncDrive'
 import { Botao, CabecalhoCard, Card, Titulo } from '../components/ui'
 import { db, exportarBackup, restaurarBackup } from '../db'
-import { carregarDemo } from '../lib/demo'
+import { Link } from 'react-router-dom'
 
 export default function Ajustes() {
   const regras = useLiveQuery(() => db.regras.toArray(), []) ?? []
@@ -32,6 +32,13 @@ export default function Ajustes() {
   async function apagarTudo() {
     if (!window.confirm('Apagar TODOS os dados deste aparelho? Faça um backup antes.')) return
     await db.delete()
+    // Zera o histórico de sincronização: a próxima sincronização traz o backup do Drive de volta.
+    try {
+      for (const k of Object.keys(localStorage)) if (k.startsWith('financas:') && k !== 'financas:googleClientId') localStorage.removeItem(k)
+    } catch {
+      /* sem localStorage */
+    }
+    location.hash = '#/comecar'
     location.reload()
   }
 
@@ -58,7 +65,9 @@ export default function Ajustes() {
         <Card atraso={2}>
           <CabecalhoCard titulo="Dados" />
           <div className="flex flex-wrap gap-3">
-            <Botao onClick={() => carregarDemo().then(() => setMsg('Dados de exemplo carregados.'))}>Carregar dados de exemplo</Botao>
+            <Link to="/comecar">
+              <Botao>Refazer o assistente inicial</Botao>
+            </Link>
             <Botao variante="perigo" onClick={apagarTudo}>
               Apagar tudo
             </Botao>

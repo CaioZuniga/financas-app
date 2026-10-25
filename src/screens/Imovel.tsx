@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { GraficoLinha } from '../components/graficos'
 import { IcLixo } from '../components/icones'
-import { Botao, CabecalhoCard, Campo, Card, Kpi, Legenda, Selecao, Titulo } from '../components/ui'
-import { salvarFinanciamento } from '../db'
+import { Botao, CabecalhoCard, Campo, Card, Kpi, Legenda, Selecao, Titulo, Vazio } from '../components/ui'
+import { db, salvarFinanciamento } from '../db'
 import { resumir, tabelaSAC, type Amortizacao, type Financiamento } from '../engine/financiamento'
 import { useDados } from '../lib/dados'
 import { difMeses, mesAtual, moeda, moedaCurta, rotuloMes } from '../lib/format'
@@ -24,6 +24,7 @@ export default function Imovel() {
   const [nova, setNova] = useState<Amortizacao>({ aposParcela: 0, valor: 50000, modo: 'prazo' })
   // Só grava depois que o usuário mexe: abrir a tela não cria um contrato de exemplo.
   const alterado = useRef(false)
+  const [cadastrando, setCadastrando] = useState(false)
 
   useEffect(() => {
     if (d.carregado && f === null) setF(d.financiamento ?? PADRAO)
@@ -39,6 +40,32 @@ export default function Imovel() {
   const tabela = useMemo(() => (f ? tabelaSAC(f) : []), [f])
   const semExtra = useMemo(() => (f ? tabelaSAC({ ...f, amortizacoes: [] }) : []), [f])
   if (!f) return null
+
+  if (!d.financiamento && !cadastrando)
+    return (
+      <div className="space-y-5">
+        <Titulo titulo="Financiamento imobiliário" sub="SAC com correção do saldo pela TR." />
+        <Card destaque>
+          <Vazio
+            titulo="Nenhum financiamento cadastrado"
+            texto="Se você tem um financiamento imobiliário, cadastre o contrato para ver saldo devedor, juros a pagar e simular amortizações."
+            acao={
+              <Botao variante="primario" onClick={() => setCadastrando(true)}>
+                Cadastrar financiamento
+              </Botao>
+            }
+          />
+        </Card>
+      </div>
+    )
+
+  async function remover() {
+    if (!window.confirm('Remover o financiamento? A tabela, as amortizações simuladas e a parcela na projeção somem.')) return
+    alterado.current = false
+    await db.config.delete('financiamento')
+    setCadastrando(false)
+    setF(PADRAO)
+  }
 
   const set = <K extends keyof Financiamento>(k: K, v: Financiamento[K]) => {
     alterado.current = true
@@ -74,7 +101,17 @@ export default function Imovel() {
 
       <div className="grid gap-5 xl:grid-cols-[1fr_1.5fr]">
         <Card atraso={2}>
-          <CabecalhoCard titulo="Contrato" />
+          <CabecalhoCard
+            titulo="Contrato"
+            sub="Não tem os dados originais? Use o saldo devedor de hoje, as parcelas que faltam e a próxima parcela como 1ª."
+            acao={
+              d.financiamento && (
+                <button className="cursor-pointer text-apagado hover:text-rosa" onClick={remover} title="Remover financiamento">
+                  <IcLixo width={16} height={16} />
+                </button>
+              )
+            }
+          />
           <div className="grid grid-cols-2 gap-3">
             <Campo rotulo="Valor financiado" type="number" value={f.valorFinanciado} sufixo="R$" onChange={(e) => set('valorFinanciado', Number(e.target.value))} className="col-span-2" />
             <Campo rotulo="Juros efetivos" type="number" step="0.01" value={+(f.taxaAnual * 100).toFixed(4)} sufixo="% a.a." onChange={(e) => set('taxaAnual', Number(e.target.value) / 100)} />

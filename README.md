@@ -4,6 +4,7 @@ Controle de finanças pessoais em PWA: cartão de crédito (importando o PDF da 
 
 Publicado em https://caiozuniga.github.io/financas-app/
 
+- **Primeiro acesso guiado**: assistente de 6 passos (renda, contas fixas, cartões, imóvel e dívidas, patrimônio), tudo pulável; quem já usa em outro aparelho vai direto para a sincronização.
 - **Privado por padrão**: os PDFs são lidos no navegador (pdf.js) e os dados ficam no IndexedDB do aparelho. Backup em JSON na tela Ajustes.
 - **Cartão**: importa faturas do Nubank, C6, Inter, XP e bancos com layout `DD/MM`; tela de revisão antes de salvar; categorias com regras aprendidas.
 - **Imóvel**: tabela SAC com correção pela TR, seguros e taxa, simulação de amortização extra (reduzir prazo ou parcela).

@@ -88,6 +88,9 @@ export async function lerFinanciamento(): Promise<Financiamento | null> {
 
 export const salvarFinanciamento = (f: Financiamento) => db.config.put({ chave: 'financiamento', valor: f })
 
+/** Marca que o assistente de primeiro acesso já foi feito (ou pulado) neste conjunto de dados. */
+export const concluirAssistente = () => db.config.put({ chave: 'assistente', valor: { concluidoEm: new Date().toISOString() } })
+
 const TABELAS = [
   'lancamentos',
   'importacoes',

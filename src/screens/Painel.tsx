@@ -1,4 +1,6 @@
-import { Link } from 'react-router-dom'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { Link, Navigate } from 'react-router-dom'
+import { db } from '../db'
 import { BarrasCategoria, Faisca, GraficoBarras, GraficoLinha } from '../components/graficos'
 import { IcAlerta } from '../components/icones'
 import { Botao, CabecalhoCard, Card, Kpi, Legenda, Progresso, Vazio } from '../components/ui'
@@ -6,17 +8,18 @@ import { alivioDeCaixa, comprometimento, detectarRecorrencias, foraDoPadrao, par
 import { avaliarMetas, gastosDoMes } from '../engine/orcamento'
 import { parcelasFuturas } from '../engine/projecao'
 import { corCategoria, porCategoria, useDados, useRegistrarSnapshot } from '../lib/dados'
-import { carregarDemo } from '../lib/demo'
 import { difMeses, moeda, moedaCurta, percentual, rotuloMes, somaMeses } from '../lib/format'
 
 export default function Painel() {
   const d = useDados()
   useRegistrarSnapshot(d)
-  if (!d.carregado) return null
+  // null = ainda carregando; false = assistente nunca feito.
+  const assistenteFeito = useLiveQuery(async () => !!(await db.config.get('assistente')), [], null)
+  if (!d.carregado || assistenteFeito === null) return null
 
   const vazio =
     d.lancamentos.length + d.recorrentes.length + d.dividas.length + d.movimentos.length + d.ativos.length === 0 && !d.financiamento
-  if (vazio) return <BoasVindas />
+  if (vazio) return assistenteFeito ? <BoasVindas /> : <Navigate to="/comecar" replace />
 
   const p = d.projecao
   const esteMes = p[0]
@@ -319,24 +322,26 @@ function Linha({ rotulo, valor }: { rotulo: string; valor: string }) {
 
 function BoasVindas() {
   const passos = [
-    { to: '/importar', t: 'Importe as faturas', d: 'Solte os PDFs do Nubank, C6 e outros. A leitura acontece no navegador.' },
+    { to: '/importar', t: 'Importe as faturas', d: 'Solte os PDFs do Nubank, XP, C6 e outros. A leitura acontece no navegador.' },
     { to: '/fluxo', t: 'Cadastre receitas e contas fixas', d: 'Salário, aluguel, escola, condomínio: a base da projeção.' },
     { to: '/imovel', t: 'Configure o financiamento', d: 'SAC + TR, com simulação de amortização extra.' },
-    { to: '/dividas', t: 'Liste as dívidas', d: 'Compare avalanche e bola de neve para quitar mais rápido.' },
+    { to: '/patrimonio', t: 'Registre o que você tem', d: 'Conta, investimentos e bens: reserva e patrimônio líquido.' },
   ]
   return (
     <div className="mx-auto max-w-4xl">
       <div className="entrar py-6 md:py-12">
-        <div className="rotulo">primeiro acesso</div>
+        <div className="rotulo">ainda sem dados</div>
         <h1 className="mt-2 font-display text-4xl leading-[1.05] font-bold tracking-tight md:text-6xl">
-          Tudo o que entra, sai e <span className="texto-neon">ainda vai sair</span>.
+          Seu painel aparece <span className="texto-neon">aqui</span>.
         </h1>
-        <p className="mt-4 max-w-xl text-suave">Cartão, imóvel, dívidas e receitas num só lugar, com projeção de 12 meses. Nada sai do seu aparelho.</p>
+        <p className="mt-4 max-w-xl text-suave">Comece pelo assistente ou cadastre direto em cada tela. Nada sai do seu aparelho.</p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link to="/importar">
-            <Botao variante="primario">Importar primeira fatura</Botao>
+          <Link to="/comecar">
+            <Botao variante="primario">Abrir o assistente</Botao>
           </Link>
-          <Botao onClick={() => carregarDemo()}>Ver com dados de exemplo</Botao>
+          <Link to="/importar">
+            <Botao>Importar primeira fatura</Botao>
+          </Link>
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -382,7 +387,9 @@ function montarDestaques(d: ReturnType<typeof useDados>): Destaque[] {
     out.push({ tom: 'alerta', titulo: `${percentual(comp.fracao!)} da renda em parcelas`, texto: 'Acima dos 30% recomendados (imóvel + dívidas + parcelas do cartão).' })
 
   const reserva = reservaEmergencia(d.ativos, d.projecao)
-  if (reserva.custoMensal > 0 && d.ativos.length) {
+  // Sem fatura nem extrato o custo mensal ignora o cartão e a reserva parece maior do que é.
+  const temGastosReais = d.lancamentos.length + d.movimentos.length > 0
+  if (reserva.custoMensal > 0 && d.ativos.length && temGastosReais) {
     if (reserva.meses < 6)
       out.push({ tom: 'alerta', titulo: `Reserva cobre ${reserva.meses.toFixed(1).replace('.', ',')} meses`, texto: `Faltam ${moeda(reserva.falta)} para chegar a 6 meses de despesas.` })
     else out.push({ tom: 'bom', titulo: `Reserva de ${reserva.meses.toFixed(0)} meses`, texto: 'Acima dos 6 meses recomendados.' })

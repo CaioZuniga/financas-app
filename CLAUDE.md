@@ -8,3 +8,4 @@
 - Antes de commitar: `npm test`, `npm run lint` e `npm run build` passando.
 - Sincronização: `src/lib/drive.ts` (Google Identity Services + Drive appDataFolder) e `src/engine/cripto.ts`. Nunca enviar dados sem criptografia para a nuvem.
 - Impressão: `@media print` em `src/index.css` troca os tokens para a versão clara; marque com `no-print` o que não deve sair no papel.
+- Sem dados de exemplo: o app começa vazio e o assistente (`src/screens/Comecar.tsx`, flag `config.assistente`) guia o primeiro acesso. Toda tela precisa de um estado vazio útil.

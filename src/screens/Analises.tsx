@@ -312,6 +312,11 @@ function AbaPlanejamento({ d }: { d: ReturnType<typeof useDados> }) {
       <div className="grid gap-5 lg:grid-cols-2">
         <Card atraso={2}>
           <CabecalhoCard titulo="Reserva de emergência" sub="Contas + investimentos cadastrados em Patrimônio" />
+          {!d.lancamentos.length && !d.movimentos.length && reserva.custoMensal > 0 && (
+            <p className="mb-3 rounded-lg border border-ambar/25 bg-ambar/5 px-3 py-2 text-xs text-ambar">
+              Ainda sem faturas importadas: o custo mensal não inclui o cartão, então a reserva parece maior do que é.
+            </p>
+          )}
           {reserva.custoMensal === 0 ? (
             <Vazio titulo="Sem custos projetados" texto="Cadastre contas fixas em Fluxo e importe faturas para calcular." />
           ) : (

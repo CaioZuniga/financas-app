@@ -20,6 +20,7 @@ import { ErroTela } from './components/ErroTela'
 import Ajustes from './screens/Ajustes'
 import Analises from './screens/Analises'
 import Cartao from './screens/Cartao'
+import Comecar from './screens/Comecar'
 import Conta from './screens/Conta'
 import Dividas from './screens/Dividas'
 import Fluxo from './screens/Fluxo'
@@ -179,6 +180,7 @@ function Telas() {
     <ErroTela chave={pathname}>
             <Routes>
               <Route path="/" element={<Painel />} />
+              <Route path="/comecar" element={<Comecar />} />
               <Route path="/cartao" element={<Cartao />} />
               <Route path="/conta" element={<Conta />} />
               <Route path="/metas" element={<Metas />} />
